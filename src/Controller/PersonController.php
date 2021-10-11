@@ -9,10 +9,13 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
+use Symfony\Component\Serializer\Exception\NotEncodableValueException;
+use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
 use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
  * @Route("/person", name="person_")
@@ -36,25 +39,36 @@ class PersonController extends AbstractController
      * @param Request $request
      * @return Response
      */
-    public function new(Request $request): Response
+    public function new(Request $request, ValidatorInterface $validator): Response
     {
-        $person = $this->get('serializer')->deserialize($request->getContent(), Person::class, 'json');
+        try {
+            $person = $this->get('serializer')->deserialize($request->getContent(), Person::class, 'json');
 
-        if ($person->getAge() > 150) {
+            $errors = $validator->validate($person);
+
+            if (count($errors) > 0) {
+                return $this->json(['success' => false, 'status' => '400', 'errors' => $errors], 400);
+            }
+
+            if ($person->getAge() < 0 | $person->getAge() > 150) {
+                return $this->json([
+                    'success' => false,
+                    'error' => 'Age should be between 0 and 150'
+                ], 400);
+            }
+
+            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager->persist($person);
+
+            $entityManager->flush();
+
             return $this->json([
-                'success' => false,
-                'error' => 'As a human, you should be under 150 years old!'
-            ], 400);
+                "success" => true,
+                "data" => $person
+            ], 201);
+        } catch (NotEncodableValueException | NotNormalizableValueException $e) {
+            return $this->json(['success' => false, 'status' => '400', 'error' => $e->getMessage()],400);
         }
-        $entityManager = $this->getDoctrine()->getManager();
-        $entityManager->persist($person);
-
-        $entityManager->flush();
-
-        return $this->json([
-            "success" => true,
-            "data" => $person
-        ], 201);
     }
 
 
