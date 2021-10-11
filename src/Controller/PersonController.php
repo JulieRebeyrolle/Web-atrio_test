@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Person;
+use App\Repository\PersonRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -22,11 +23,11 @@ class PersonController extends AbstractController
      * @Route ("/", methods={"GET"}, name="index")
      * @return Response
      */
-    public function index(): Response
+    public function index(PersonRepository $personRepository): Response
     {
         return $this->json([
-            'message' => 'Welcome to your new controller!',
-            'path' => 'src/Controller/PersonController.php',
+            'success' => true,
+            'data' => $personRepository->findBy([], ['lastname' => 'ASC']),
         ]);
     }
 
@@ -40,14 +41,20 @@ class PersonController extends AbstractController
         $person = $this->get('serializer')->deserialize($request->getContent(), Person::class, 'json');
 
         if ($person->getAge() > 150) {
-            return $this->json(['success' => false, 'error' => 'As a human, you should be under 150 years old!'], 400);
+            return $this->json([
+                'success' => false,
+                'error' => 'As a human, you should be under 150 years old!'
+            ], 400);
         }
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->persist($person);
 
         $entityManager->flush();
 
-        return $this->json(["success" => true, "data" => $person], 201);
+        return $this->json([
+            "success" => true,
+            "data" => $person
+        ], 201);
     }
 
 
