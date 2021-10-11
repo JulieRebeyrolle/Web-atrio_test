@@ -72,4 +72,10 @@ class Person
 
         return $this;
     }
+
+    public function getAge(): int
+    {
+        $today = new \DateTime('now');
+        return $this->birthdate->diff($today)->y;
+    }
 }

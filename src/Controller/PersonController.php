@@ -38,6 +38,10 @@ class PersonController extends AbstractController
     public function new(Request $request): Response
     {
         $person = $this->get('serializer')->deserialize($request->getContent(), Person::class, 'json');
+
+        if ($person->getAge() > 150) {
+            return $this->json(['success' => false, 'error' => 'As a human, you should be under 150 years old!'], 400);
+        }
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->persist($person);
 
