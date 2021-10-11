@@ -4,6 +4,8 @@ namespace App\Entity;
 
 use App\Repository\PersonRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
+
 
 /**
  * @ORM\Entity(repositoryClass=PersonRepository::class)
@@ -19,16 +21,24 @@ class Person
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Assert\NotBlank()
+     * @Assert\Length(max="255", maxMessage="Le nom saisi {{ value }} est trop long, il ne devrait pas dépasser {{ limit }} caractères")
+     * @Assert\Length(min="2", minMessage="Le nom saisi {{ value }} est trop court, il devrait contenir au moins {{ limit }} caractères")
      */
     private $lastname;
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Assert\NotBlank()
+     * @Assert\Length(max="255", maxMessage="Le prénom saisi {{ value }} est trop long, il ne devrait pas dépasser {{ limit }} caractères")
+     * @Assert\Length(min="2", minMessage="Le prénom saisi {{ value }} est trop court, il devrait contenir au moins {{ limit }} caractères")
+     *
      */
     private $firstname;
 
     /**
      * @ORM\Column(type="date")
+     * @Assert\NotBlank()
      */
     private $birthdate;
 

@@ -13,6 +13,7 @@ use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
  * @Route("/person", name="person_")
@@ -36,9 +37,15 @@ class PersonController extends AbstractController
      * @param Request $request
      * @return Response
      */
-    public function new(Request $request): Response
+    public function new(Request $request, ValidatorInterface $validator): Response
     {
         $person = $this->get('serializer')->deserialize($request->getContent(), Person::class, 'json');
+
+        $errors = $validator->validate($person);
+
+        if (count($errors) > 0) {
+            return $this->json(['success' => false, 'status' => '400', 'errors' => $errors],400);
+        }
 
         if ($person->getAge() > 150) {
             return $this->json([
@@ -46,6 +53,7 @@ class PersonController extends AbstractController
                 'error' => 'As a human, you should be under 150 years old!'
             ], 400);
         }
+
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->persist($person);
 
